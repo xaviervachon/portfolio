@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Xavier Vachon — Video Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================ TOKENS */
+:root{
+  --bg:#ffffff;
+  --ink:#0a0a0a;
+  --ink-2:#5e5e5e;
+  --ink-3:#9a9a9a;
+  --line:#e8e8e8;
+  --line-2:#d4d4d4;
+  --orange:#ff5a00;
+  --orange-ink:#e84e00;
+  --orange-soft:#fff1e8;
+  --win:#f0f0f0;
+  --win-stroke:#dadada;
+  --tl-red:#ec6b5f;--tl-yel:#f5bf4e;--tl-grn:#61c554;
+  --sans:"Helvetica Neue",Helvetica,Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --rail:96px;
+}
+/* ============================================================ RESET */
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);color:var(--ink);background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+img{display:block;max-width:100%}
+ul{list-style:none}
+::selection{background:var(--orange);color:#fff}
+::-webkit-scrollbar{width:12px;height:12px}
+::-webkit-scrollbar-track{background:#fff}
+::-webkit-scrollbar-thumb{background:#d8d8d8;border:3px solid #fff;border-radius:10px}
+::-webkit-scrollbar-thumb:hover{background:var(--orange)}
+.mono{font-family:var(--mono)}
+
+/* ============================================================ LEFT RAIL */
+.rail{position:fixed;left:0;top:0;bottom:0;width:var(--rail);background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:18px 0 16px;z-index:60}
+.mark{width:46px;height:46px;border-radius:11px;background:var(--ink);color:#fff;display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:16px;letter-spacing:.04em;position:relative}
+.mark::after{content:"";position:absolute;right:-3px;bottom:-3px;width:11px;height:11px;border-radius:3px;background:var(--orange);border:2px solid #fff}
+.tabs{display:flex;flex-direction:column;gap:8px;margin-top:34px;width:100%;align-items:center}
+.tab{position:relative;width:64px;display:flex;flex-direction:column;align-items:center;gap:7px;padding:11px 0 9px;border-radius:14px;color:var(--ink);transition:background .18s ease,color .18s ease}
+.tab .pico{width:28px;height:28px;display:block}
+.tab .pico svg{width:100%;height:100%;display:block}
+.tab .tlabel{font-family:var(--mono);font-weight:600;font-size:9px;letter-spacing:.13em;color:var(--ink-3);transition:color .18s ease}
+.tab:hover{background:#f5f5f5}
+.tab:hover .tlabel{color:var(--ink-2)}
+.tab.active{background:var(--orange)}
+.tab.active .tlabel{color:#0a0a0a}
+.tab.active .pico{color:#0a0a0a}
+.tab:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.rail-foot{margin-top:auto;font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.16em;color:var(--ink-3);writing-mode:vertical-rl;transform:rotate(180deg);padding:8px 0}
+
+/* ============================================================ MAIN / TOPBAR */
+.main{margin-left:var(--rail);min-height:100vh;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;height:54px;padding:0 34px;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.tb-brand{font-family:var(--mono);font-weight:700;font-size:12.5px;letter-spacing:.18em}
+.tb-right{display:flex;align-items:center;gap:18px;font-family:var(--mono);font-weight:600;font-size:11px;letter-spacing:.14em;color:var(--ink-3)}
+.tb-cur{color:var(--orange)}
+.stage{flex:1;width:100%;max-width:1120px;margin:0 auto;padding:0 34px 120px}
+
+/* page routing */
+.page{display:none}
+.page.active{display:block;animation:pin .5s cubic-bezier(.2,.8,.3,1)}
+@keyframes pin{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* section label */
+.slug{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-weight:600;font-size:11px;letter-spacing:.18em;color:var(--ink-2);text-transform:uppercase;margin:40px 0 22px}
+.slug .num{color:var(--orange)}
+.slug .rule{flex:1;height:1px;background:var(--line-2)}
+
+/* ============================================================ HOME HERO */
+.hero-name{font-family:var(--sans);font-weight:700;font-size:clamp(46px,8.4vw,104px);line-height:1.04;letter-spacing:-.035em;color:var(--ink);padding-top:34px}
+.hero-name .dot{color:var(--orange)}
+
+/* ============================================================ macOS WINDOW (from .fig) */
+.window{margin-top:36px;border-radius:10px;background:var(--win);border:1px solid var(--win-stroke);box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 30px 60px -28px rgba(0,0,0,.32),0 8px 22px -14px rgba(0,0,0,.22);overflow:hidden}
+.win-bar{display:flex;align-items:center;height:38px;padding:0 14px;background:linear-gradient(#f7f7f7,#ededed);border-bottom:1px solid #e1e1e1;position:relative}
+.tl{display:flex;gap:8px}
+.tl span{width:13px;height:13px;border-radius:50%;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.12)}
+.tl .r{background:var(--tl-red)}.tl .y{background:var(--tl-yel)}.tl .g{background:var(--tl-grn)}
+.win-title{position:absolute;left:0;right:0;text-align:center;font-family:var(--mono);font-weight:600;font-size:11.5px;letter-spacing:.05em;color:#8a8a8a;pointer-events:none}
+.win-bar-r{margin-left:auto;font-family:var(--mono);font-weight:600;font-size:10px;letter-spacing:.1em;color:#a8a8a8}
+.win-body{background:var(--win);padding:12px}
+.reel{position:relative;border-radius:4px;overflow:hidden;background:#000;aspect-ratio:16/9;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.reel iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.win-foot{display:flex;align-items:center;gap:16px;height:34px;padding:0 14px;background:linear-gradient(#f1f1f1,#e9e9e9);border-top:1px solid #e1e1e1;font-family:var(--mono);font-weight:600;font-size:10.5px;letter-spacing:.08em;color:#7c7c7c}
+.win-foot .rec{display:inline-flex;align-items:center;gap:7px;color:var(--orange-ink)}
+.win-foot .rec::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--orange)}
+.win-foot .sp{margin-left:auto}
+.win-foot .bar{flex:1;max-width:200px;height:4px;border-radius:2px;background:#d4d4d4;overflow:hidden;position:relative}
+.win-foot .bar::after{content:"";position:absolute;left:0;top:0;bottom:0;width:100%;background:var(--orange)}
+
+/* meta strip under window */
+.metastrip{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 22px;margin-top:18px;padding:14px 4px;border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2)}
+.metastrip span{font-family:var(--mono);font-weight:600;font-size:10.5px;letter-spacing:.12em;color:var(--ink-2);text-transform:uppercase}
+.metastrip span b{color:var(--orange-ink);font-weight:700}
+
+/* socials */
+.socials{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+.pill{display:inline-flex;align-items:center;gap:10px;padding:11px 18px;border:1px solid var(--ink);border-radius:999px;font-family:var(--mono);font-weight:600;font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:#fff;transition:background .16s ease,color .16s ease,transform .16s ease}
+.pill .arr{font-size:13px;transition:transform .16s ease}
+.pill:hover{background:var(--orange);border-color:var(--orange);color:#fff}
+.pill:hover .arr{transform:translate(2px,-2px)}
+.pico-dot{width:9px;height:9px;border-radius:2px;background:currentColor;flex:0 0 auto}
+
+/* ============================================================ PERSONAL WORK */
+.filter-row{display:flex;align-items:center;gap:16px;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--line-2)}
+.filter-label{font-family:var(--mono);font-weight:700;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);width:60px;flex:0 0 auto}
+.filter-bar{display:flex;flex-wrap:wrap;gap:10px;flex:1}
+.fbtn{padding:8px 16px;border:1px solid var(--ink);border-radius:6px;background:#fff;font-family:var(--mono);font-weight:600;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);cursor:pointer;transition:background .16s ease,border-color .16s ease,color .16s ease}
+.fbtn:hover{background:#f5f5f5}
+.fbtn.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.channel{margin-bottom:32px;border:1px solid var(--line-2);border-radius:8px;overflow:hidden}
+.ch-toggle{display:flex;align-items:center;gap:14px;padding:18px 20px;background:#fafafa;cursor:pointer;user-select:none;transition:background .16s ease}
+.ch-toggle:hover{background:#f5f5f5}
+.ch-toggle .arrow{width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:13px;color:var(--ink-2);transition:transform .2s cubic-bezier(.3,.7,.2,1);flex:0 0 auto}
+.channel.open .ch-toggle .arrow{transform:rotate(90deg)}
+.ch-head{display:flex;align-items:center;gap:12px;flex:1;flex-wrap:wrap;row-gap:8px}
+.ch-avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;flex:0 0 auto;border:1px solid var(--line-2);background:#eee}
+.ch-head .ch-name{font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+.ch-head a.ch-name{color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:color .16s ease}
+.ch-head a.ch-name:hover{color:var(--orange)}
+.ch-head .ch-ext{font-size:11px;color:var(--ink-3);transition:color .16s ease}
+.ch-head a.ch-name:hover .ch-ext{color:var(--orange)}
+.ch-head .ch-note{font-family:var(--mono);font-weight:500;font-size:10px;letter-spacing:.04em;color:var(--ink-3);font-style:italic;border:1px dashed var(--line-2);border-radius:4px;padding:3px 8px;white-space:nowrap}
+.no-results{display:flex;align-items:center;gap:14px;padding:36px 22px;border:1px dashed var(--line-2);border-radius:8px;font-family:var(--mono);font-weight:600;font-size:12px;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase}
+.no-results .pico{width:22px;height:22px;color:var(--ink-3);flex:0 0 auto}
+.ch-head .ch-tag{font-family:var(--mono);font-weight:600;font-size:10px;letter-spacing:.12em;color:var(--ink-3);border:1px solid var(--line-2);border-radius:4px;padding:3px 8px}
+.ch-head .ch-count{font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.1em;color:var(--orange);margin-left:auto}
+.ch-body{max-height:0;overflow:hidden;transition:max-height .3s cubic-bezier(.3,.7,.2,1)}
+.channel.open .ch-body{max-height:9999px}
+.ch-inner{padding:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:20px}
+.vcard{display:block;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fff;transition:border-color .18s ease,transform .18s ease,box-shadow .18s ease}
+.vcard:hover{border-color:var(--orange);transform:translateY(-4px);box-shadow:0 16px 30px -18px rgba(0,0,0,.4)}
+.vthumb{position:relative;aspect-ratio:16/9;overflow:hidden;background:#111}
+.vthumb img{width:100%;height:100%;object-fit:cover;transition:transform .5s cubic-bezier(.2,.8,.3,1);filter:grayscale(.15)}
+.vcard:hover .vthumb img{transform:scale(1.05);filter:none}
+.vplay{position:absolute;inset:0;display:grid;place-items:center;opacity:0;transition:opacity .2s ease;background:rgba(255,90,0,.14)}
+.vcard:hover .vplay{opacity:1}
+.vplay span{width:50px;height:50px;border-radius:50%;background:var(--orange);display:grid;place-items:center;box-shadow:0 6px 16px rgba(255,90,0,.5)}
+.vplay span::after{content:"";margin-left:4px;border-left:15px solid #fff;border-top:9px solid transparent;border-bottom:9px solid transparent}
+.vmeta{display:flex;align-items:flex-start;gap:10px;padding:13px 14px 15px}
+.vmeta .idx{font-family:var(--mono);font-weight:700;font-size:11px;color:var(--orange);flex:0 0 auto;padding-top:1px}
+.vtitle{font-family:var(--mono);font-weight:500;font-size:12.5px;line-height:1.45;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ch-empty{display:flex;align-items:center;gap:14px;padding:30px 22px;border:1px dashed var(--line-2);border-radius:6px;font-family:var(--mono);font-weight:600;font-size:12px;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase}
+.ch-empty .pico{width:22px;height:22px;color:var(--ink-3);flex:0 0 auto}
+
+/* ============================================================ COMING SOON / TOOLS */
+.coming{margin-top:30px;border:1px dashed var(--line-2);border-radius:10px;padding:80px 30px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:20px;background:repeating-linear-gradient(45deg,#fff,#fff 13px,#fcfcfc 13px,#fcfcfc 26px)}
+.coming .cpico{width:64px;height:64px;color:var(--ink)}
+.coming .cbig{font-family:var(--sans);font-weight:700;font-size:clamp(40px,7vw,76px);letter-spacing:-.03em;line-height:1}
+.coming .cbig em{font-style:normal;color:var(--orange)}
+.coming .csub{font-family:var(--mono);font-weight:500;font-size:12.5px;letter-spacing:.06em;color:var(--ink-2);max-width:420px;line-height:1.6;text-transform:uppercase}
+
+/* ============================================================ HIRE */
+.hire{margin-top:8px}
+.hire-big{font-family:var(--sans);font-weight:700;font-size:clamp(34px,5.6vw,68px);line-height:1.02;letter-spacing:-.03em;max-width:13ch}
+.hire-big em{font-style:normal;color:var(--orange)}
+.hire-p{font-family:var(--mono);font-weight:500;font-size:13.5px;line-height:1.7;color:var(--ink-2);max-width:560px;margin-top:18px}
+.hire-p:first-of-type{margin-top:26px}
+.hp-strong{font-weight:700;color:#1a5cff}
+.mailbtn{display:inline-flex;align-items:center;gap:12px;margin-top:30px;padding:16px 24px;border-radius:999px;background:var(--orange);color:#fff;font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:.06em;transition:transform .18s ease,box-shadow .18s ease}
+.mailbtn:hover{transform:translateY(-3px);box-shadow:0 16px 30px -12px rgba(255,90,0,.6)}
+.mailbtn .arr{font-size:15px}
+.svcrow{display:flex;flex-wrap:wrap;gap:10px;margin-top:34px;padding-top:26px;border-top:1px solid var(--line-2)}
+.svc{font-family:var(--mono);font-weight:600;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);border:1px solid var(--line-2);border-radius:4px;padding:7px 12px}
+
+/* ============================================================ RESPONSIVE */
+@media(max-width:780px){
+  :root{--rail:0px}
+  .rail{flex-direction:row;left:0;right:0;top:auto;bottom:0;width:auto;height:62px;border-right:none;border-top:1px solid var(--line);padding:0 12px;align-items:center;justify-content:space-between}
+  .mark{width:38px;height:38px;font-size:13px;border-radius:9px}
+  .tabs{flex-direction:row;margin-top:0;gap:4px;width:auto}
+  .tab{width:auto;min-width:60px;padding:7px 10px;border-radius:11px}
+  .tab .pico{width:23px;height:23px}
+  .rail-foot{display:none}
+  .main{margin-left:0;padding-bottom:62px}
+  .topbar{padding:0 20px}
+  .stage{padding:0 20px 60px}
+  .metastrip{gap:8px 16px}
+}
+@media(max-width:480px){
+  .tab .tlabel{display:none}
+  .tab{min-width:0;padding:8px}
+  .topbar .tb-right .tb-loc{display:none}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ============================== LEFT RAIL ============================== -->
+<aside class="rail">
+  <a class="mark" href="#home" data-page="home" aria-label="Xavier Vachon — Home">XV</a>
+  <nav class="tabs" aria-label="Primary">
+    <button class="tab" data-page="home"><span class="pico" data-px="home"></span><span class="tlabel">HOME</span></button>
+    <button class="tab" data-page="personal"><span class="pico" data-px="work"></span><span class="tlabel">WORK</span></button>
+    <button class="tab" data-page="tools"><span class="pico" data-px="tools"></span><span class="tlabel">TOOLS</span></button>
+    <button class="tab" data-page="hire"><span class="pico" data-px="person"></span><span class="tlabel">HIRE ME</span></button>
+  </nav>
+  <div class="rail-foot">MONTRÉAL · QC</div>
+</aside>
+
+<!-- ============================== MAIN ============================== -->
+<div class="main">
+  <header class="topbar">
+    <span class="tb-brand">XAVIER VACHON</span>
+    <span class="tb-right"><span class="tb-loc">VIDEO&nbsp;EDITOR</span><span class="tb-cur" id="tbCur">/&nbsp;HOME</span></span>
+  </header>
+
+  <main class="stage">
+
+    <!-- ===== HOME ===== -->
+    <section class="page" data-page="home" data-screen-label="Home" aria-label="Home">
+      <h1 class="hero-name">XAVIER VACHON<span class="dot">.</span></h1>
+
+      <div class="window" style="margin-top:34px">
+        <div class="win-bar">
+          <div class="tl"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+          <div class="win-title">demo-reel.mp4</div>
+          <div class="win-bar-r">16 : 9</div>
+        </div>
+        <div class="win-body">
+          <div class="reel">
+            <iframe src="https://www.youtube-nocookie.com/embed/cDI3znZX4zQ" title="Xavier Vachon — Demo Reel" loading="lazy" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe>
+          </div>
+        </div>
+        <div class="win-foot">
+          <span class="rec">REEL</span>
+          <span>H.264 · 1080P</span>
+          <div class="bar"></div>
+          <span class="sp">EXPORT&nbsp;✓</span>
+        </div>
+      </div>
+
+      <div class="socials" style="justify-content:center;margin-top:40px">
+        <a class="pill" href="https://www.instagram.com/xavier_vachon/" target="_blank" rel="noopener"><span class="pico-dot"></span>Instagram<span class="arr">↗</span></a>
+        <a class="pill" href="https://www.tiktok.com/@xavier_vachon" target="_blank" rel="noopener"><span class="pico-dot"></span>TikTok<span class="arr">↗</span></a>
+        <a class="pill" href="https://www.youtube.com/@Le2Pour1" target="_blank" rel="noopener"><span class="pico-dot"></span>YouTube<span class="arr">↗</span></a>
+      </div>
+    </section>
+
+    <!-- ===== PERSONAL WORK ===== -->
+    <section class="page" data-page="personal" data-screen-label="Personal work" aria-label="Personal work">
+      <h2 class="hero-name" style="padding-top:0;margin-bottom:28px">WORK<span class="dot">.</span></h2>
+
+      <div class="filter-row">
+        <span class="filter-label">TYPE</span>
+        <div class="filter-bar" id="typeBar"></div>
+      </div>
+
+      <div id="channels" style="margin-top:34px"></div>
+      <div id="noResults" class="no-results" style="display:none"><span class="pico" data-px="work"></span>No videos in this category yet</div>
+    </section>
+
+    <!-- ===== TOOLS ===== -->
+    <section class="page" data-page="tools" data-screen-label="Tools for editors" aria-label="Tools for editors">
+      <div class="slug"><span class="num">01</span><span>Tools for editors</span><span class="rule"></span><span>SOON</span></div>
+      <div class="coming">
+        <span class="cpico" data-px="tools"></span>
+        <span class="cbig">COMING&nbsp;<em>SOON</em></span>
+        <span class="csub">A pack of presets, LUTs &amp; templates for editors is in the works. Check back shortly.</span>
+      </div>
+    </section>
+
+    <!-- ===== HIRE ===== -->
+    <section class="page" data-page="hire" data-screen-label="Hire me" aria-label="Hire me">
+      <div class="slug"><span class="num">01</span><span>Hire me</span><span class="rule"></span><span>CONTACT</span></div>
+      <div class="hire">
+        <h2 class="hire-big">LET'S MAKE SOMETHING <em>WORTH WATCHING.</em></h2>
+        <p class="hire-p">Tu as besoin d'un montage vidéo pour mettre en valeur ton contenu personnel, ton entreprise ou ton agence?</p>
+        <p class="hire-p">Écris-moi un courriel avec les détails de ton projet à l'adresse ci-dessous, et je te répondrai <span class="hp-strong">en moins de 24 heures.</span></p>
+        <p class="hire-p">En travaillant avec moi, tu t'assures de recevoir un montage adapté à tes objectifs, optimisé pour la plateforme de ton choix et conçu pour capter l'attention de ton audience. Que ce soit pour TikTok, Instagram, YouTube, Facebook ou toute autre plateforme, je peux t'aider à créer du contenu plus professionnel, plus engageant et plus crédible.</p>
+        <a class="mailbtn" href="mailto:xavier.vachon@videotron.ca">XAVIER.VACHON@VIDEOTRON.CA<span class="arr">↗</span></a>
+        <div class="svcrow">
+          <span class="svc">Long-form</span>
+          <span class="svc">Short-form</span>
+          <span class="svc">Color grading</span>
+          <span class="svc">Motion graphics</span>
+          <span class="svc">Storytelling</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* ===================== PIXEL ICONS ===================== */
+const PX = {
+  home:[
+    "000010000",
+    "000111000",
+    "001111100",
+    "011111110",
+    "111111111",
+    "011111110",
+    "011101110",
+    "011101110",
+    "011101110"],
+  work:[
+    "110011001",
+    "011001100",
+    "111111111",
+    "111111111",
+    "111111111",
+    "111111111",
+    "111111111",
+    "111111111",
+    "111111111"],
+  tools:[
+    "011000110",
+    "011000110",
+    "011111110",
+    "001111100",
+    "000111000",
+    "000111000",
+    "001110000",
+    "011100000",
+    "111000000"],
+  person:[
+    "000111000",
+    "001111100",
+    "001111100",
+    "000111000",
+    "000000000",
+    "001111100",
+    "011111110",
+    "111111111",
+    "111111111"]
+};
+function pxSVG(name){
+  const g=PX[name];if(!g)return"";const cols=g[0].length,rows=g.length,c=3;let r="";
+  for(let y=0;y<rows;y++)for(let x=0;x<cols;x++)if(g[y][x]==="1")r+=`<rect x="${x*c}" y="${y*c}" width="${c}" height="${c}"/>`;
+  return `<svg viewBox="0 0 ${cols*c} ${rows*c}" fill="currentColor" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;
+}
+document.querySelectorAll('[data-px]').forEach(el=>el.innerHTML=pxSVG(el.dataset.px));
+
+/* ===================== DATA ===================== */
+const CHANNELS = [
+  /* ---- YOUTUBE VIDEOS ---- */
+  {type:"youtube", name:"Jemcee sur DailyMotion", tag:"YOUTUBE", videos:[
+    {id:"S5_pw6S9qkI", t:"Le hacker québécois de 15 ans qui a paralysé Amazon"},
+    {id:"wW7qkShANZA", t:"L'arnaque à $130M qui a marqué l'histoire du Québec (Vincent Lacroix)"},
+    {id:"KAYpUXniGVY", t:"60M$ de c*oke dans leurs valises : la croisière sans retour de 2 Québécoises"},
+    {id:"QZFJ_0vHjZI", t:"19M$ de sirop d'érable disparus : Le casse du siècle"},
+    {id:"yffkrYnWSgg", t:"Massacre au Parlement de Québec : l'histoire troublante de Denis Lortie"},
+    {id:"AqFPyuoZzw0", t:"L'empire médiatique de $13 Milliards qui domine le Québec"},
+    {id:"nU_KRJQjq98", t:"La naissance des Canadiens de Montréal"},
+    {id:"TK7rav5fey0", t:"L'histoire des Canadiens de Montréal : Une Dynastie"},
+    {id:"XHa6mVTuMGk", t:"14 Millions $. 24 Minutes. Le Braquage Québécois PARFAIT"}
+  ]},
+  {type:"youtube", name:"Buckboys", tag:"YOUTUBE", videos:[]},
+  {type:"youtube", name:"Jasmin Lavoie", tag:"YOUTUBE", videos:[
+    {id:"7fxjAhlifjI", t:"J'ai travaillé à l'ONU. Voici ce qu'on est vraiment en train de perdre."},
+    {id:"9WxhDO5wE_o", t:"J'ai regardé des heures de propagande sans le savoir (et toi aussi)"},
+    {id:"h6kROFySGfQ", t:"Je pense qu'on n'était pas censés vivre comme ça"},
+    {id:"sDnCXSR8MRg", t:"Je voulais la Coupe du monde dans ma ville. J'ai changé d'idée."},
+    {id:"2aKBiD9BvXk", t:"J'ai trouvé le prochain Trump"}
+  ]},
+  /* ---- PODCASTS ---- */
+  {type:"podcast", name:"Tout le monde gagne, Ça ou ça & Cœur de robot", tag:"PODCAST",
+   url:"https://www.youtube.com/@TLMG13",
+   avatar:"https://yt3.googleusercontent.com/i6chYIDWupLf5g_B5TI9OROy-4YVjmshsXS9JbYkKCfXGtgYN50CznnuQCUMx0q8oc_0xL9evQ=s176-c-k-c0x00ffffff-no-rj",
+   note:"Jusqu'à juin 2026", videos:[
+    {id:"Pe6ecpgVF2c", t:"TLMG Ep 207 : Greg Beaudin & Maxime Gervais (La mort qui s'agenouille)"},
+    {id:"tTJpz4CThqk", t:"Ça ou Ça Ép.88 : Jean-François Provençal"},
+    {id:"c6bnJeRZ_qQ", t:"CDR Ep.105 — Retour sur Hors Réseau et les défis de Marylène Gendron avec la gestion de ses finances"},
+    {id:"juvzSkP2IHU", t:"TLMG Ep 206 : Charlot Touzel & Pascale Marineau (La fin de l'imagination humaine?)"}
+  ]},
+  {type:"podcast", name:"Startop Podcast", tag:"PODCAST",
+   url:"https://www.youtube.com/@startoppodcast",
+   avatar:"https://yt3.googleusercontent.com/8qgJDa81QYjaglRDFXVPagFozld5bhRJSiRqE6zgH3YUCOj2yyoytylrIPSUSxZoChW6du5J5g=s176-c-k-c0x00ffffff-no-rj",
+   note:"Jusqu'à juin 2025", videos:[
+    {id:"7y8ASb5Tbyk", t:"Le réel impact de l'émission Dans l'œil du dragon"},
+    {id:"BiLtKBTPlsQ", t:"Rentabiliser ses employés"},
+    {id:"qvrzT8HgkZs", t:"Les risques de la cryptomonnaie"},
+    {id:"PbEerO0y1Xc", t:"On a reçu Ben Boulanger"}
+  ]},
+  /* ---- MUSIC VIDEOS ---- */
+  {type:"music", name:"Music Videos", tag:"MUSIC", videos:[
+    {id:"5Y_6O4ZCFlE", t:"Amilnizar — Maybach (Clip Officiel)"},
+    {id:"cSvsp1aEbTE", t:"King Fali — Bête de scène (Prod. ExVee)"}
+  ]}
+];
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function pad(n){return String(n).padStart(2,"0");}
+
+/* ===================== RENDER CHANNELS WITH TWO-LEVEL FILTERING ===================== */
+const TYPES = {youtube:'YouTube Videos', podcast:'Podcasts', music:'Music Videos', other:'Other'};
+const typeKeys = Object.keys(TYPES);
+
+/* type filter buttons */
+const typeHTML = ['all',...typeKeys].map((t,i)=>`<button class="fbtn${i===0?' on':''}" data-type="${t}">${t==='all'?'All':TYPES[t]}</button>`).join('');
+document.getElementById('typeBar').innerHTML = typeHTML;
+
+
+/* accordion sections */
+const chHTML = CHANNELS.map((ch,ci)=>{
+  const body = ch.videos.length
+    ? `<div class="grid">${ch.videos.map((v,i)=>`<a class="vcard" href="https://www.youtube.com/watch?v=${v.id}" target="_blank" rel="noopener" title="${esc(v.t)}" data-type="${ch.type}"><div class="vthumb"><img src="https://i.ytimg.com/vi/${v.id}/hqdefault.jpg" alt="${esc(v.t)}" loading="lazy" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/${v.id}/mqdefault.jpg'"><span class="vplay"><span></span></span></div><div class="vmeta"><span class="idx">${pad(i+1)}</span><span class="vtitle">${esc(v.t)}</span></div></a>`).join('')}</div>`
+    : `<div class="ch-empty"><span class="pico" data-px="work"></span>Coming soon — no videos yet</div>`;
+  const avatar = ch.avatar ? `<img class="ch-avatar" src="${ch.avatar}" alt="${esc(ch.name)}" loading="lazy" referrerpolicy="no-referrer">` : '';
+  const name = ch.url
+    ? `<a class="ch-name ch-link" href="${ch.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(ch.name)}<span class="ch-ext">↗</span></a>`
+    : `<span class="ch-name">${esc(ch.name)}</span>`;
+  const note = ch.note ? `<span class="ch-note">${esc(ch.note)}</span>` : '';
+  return `<div class="channel open" data-type="${ch.type}"><div class="ch-toggle"><span class="arrow">▶</span>${avatar}<div class="ch-head">${name}<span class="ch-tag">${ch.tag}</span>${note}<span class="ch-count">[${pad(ch.videos.length)}]</span></div></div><div class="ch-body"><div class="ch-inner">${body}</div></div></div>`;
+}).join('');
+document.getElementById('channels').innerHTML = chHTML;
+
+/* filtering logic */
+function applyFilters(){
+  const activeType = document.querySelector('#typeBar .fbtn.on')?.dataset.type||'all';
+  let visible=0;
+  document.querySelectorAll('.channel').forEach(ch=>{
+    const match = activeType==='all' || ch.dataset.type===activeType;
+    ch.style.display = match?'':'none';
+    if(match) visible++;
+  });
+  const nr=document.getElementById('noResults');
+  if(nr) nr.style.display = visible?'none':'';
+}
+
+/* type filter interaction */
+document.getElementById('typeBar').addEventListener('click',e=>{
+  const btn=e.target.closest('.fbtn');if(!btn)return;
+  document.querySelectorAll('#typeBar .fbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  applyFilters();
+});
+
+/* accordion toggle */
+document.getElementById('channels').addEventListener('click',e=>{
+  const tog=e.target.closest('.ch-toggle');if(!tog)return;
+  const ch=tog.closest('.channel');
+  ch.classList.toggle('open');
+});
+
+/* fill any pico placeholders rendered after initial pass */
+document.querySelectorAll('[data-px]').forEach(el=>{if(!el.innerHTML)el.innerHTML=pxSVG(el.dataset.px);});
+
+/* ===================== ROUTING ===================== */
+const LABELS={home:"HOME",personal:"WORK",tools:"TOOLS",hire:"HIRE ME"};
+function show(page){
+  if(!['home','personal','tools','hire'].includes(page))page='home';
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.dataset.page===page));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.page===page));
+  document.getElementById('tbCur').innerHTML='/&nbsp;'+LABELS[page];
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function nav(page){if(location.hash.slice(1)!==page)location.hash=page;else show(page);}
+document.querySelectorAll('a.mark[data-page], button.tab[data-page]').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();nav(el.dataset.page);}));
+window.addEventListener('hashchange',()=>show(location.hash.slice(1)||'home'));
+show(location.hash.slice(1)||'home');
+</script>
+</body>
+</html>
