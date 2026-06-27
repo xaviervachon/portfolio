@@ -349,29 +349,49 @@ document.querySelectorAll('[data-px]').forEach(el=>el.innerHTML=pxSVG(el.dataset
 /* ===================== DATA ===================== */
 const CHANNELS = [
   /* ---- YOUTUBE VIDEOS ---- */
-  {type:"youtube", name:"Jemcee sur DailyMotion", tag:"YOUTUBE", videos:[
-    {id:"S5_pw6S9qkI", t:"Le hacker québécois de 15 ans qui a paralysé Amazon"},
-    {id:"wW7qkShANZA", t:"L'arnaque à $130M qui a marqué l'histoire du Québec (Vincent Lacroix)"},
-    {id:"KAYpUXniGVY", t:"60M$ de c*oke dans leurs valises : la croisière sans retour de 2 Québécoises"},
-    {id:"QZFJ_0vHjZI", t:"19M$ de sirop d'érable disparus : Le casse du siècle"},
-    {id:"yffkrYnWSgg", t:"Massacre au Parlement de Québec : l'histoire troublante de Denis Lortie"},
-    {id:"AqFPyuoZzw0", t:"L'empire médiatique de $13 Milliards qui domine le Québec"},
-    {id:"nU_KRJQjq98", t:"La naissance des Canadiens de Montréal"},
+  {type:"youtube", name:"Jemcee sur DailyMotion", tag:"YOUTUBE",
+   url:"https://www.youtube.com/@JemceesurDailymotion",
+   avatar:"https://yt3.googleusercontent.com/4l8sCOxlRlWRUsZIJH6ET7lhpZNPeF1AGsjG65jxSv1k5Vzb8KjkYgvSB3FWpliea4Wul4UCPQ=s176-c-k-c0x00ffffff-no-rj",
+   videos:[
+    {id:"AU2vHzjqpEM", t:"250 M$ de faux billets Américains : le Québécois derrière ce coup Historique"},
+    {id:"teX06NFfgyc", t:"L'évasion de Prison la plus folle de l'histoire du Québec"},
+    {id:"XHa6mVTuMGk", t:"14 Millions $. 24 Minutes. Le Braquage Québécois PARFAIT"},
     {id:"TK7rav5fey0", t:"L'histoire des Canadiens de Montréal : Une Dynastie"},
-    {id:"XHa6mVTuMGk", t:"14 Millions $. 24 Minutes. Le Braquage Québécois PARFAIT"}
+    {id:"nU_KRJQjq98", t:"La naissance des Canadiens de Montréal"},
+    {id:"AqFPyuoZzw0", t:"L'empire médiatique de $13 Milliards qui domine le Québec"},
+    {id:"yffkrYnWSgg", t:"Massacre au Parlement de Québec : l'histoire troublante de Denis Lortie"},
+    {id:"QZFJ_0vHjZI", t:"19M$ de sirop d'érable disparus : Le casse du siècle"},
+    {id:"KAYpUXniGVY", t:"60M$ de c*oke dans leurs valises : la croisière sans retour de 2 Québécoises"},
+    {id:"wW7qkShANZA", t:"L'arnaque à $130M qui a marqué l'histoire du Québec (Vincent Lacroix)"},
+    {id:"S5_pw6S9qkI", t:"Le hacker québécois de 15 ans qui a paralysé Amazon"}
   ]},
-  {type:"youtube", name:"Buckboys", tag:"YOUTUBE", url:"https://www.youtube.com/@buckboys", videos:[
+  {type:"youtube", name:"Buckboys", tag:"YOUTUBE",
+   url:"https://www.youtube.com/@buckboys",
+   avatar:"https://yt3.googleusercontent.com/NWgfcfBa0e4ROf6PFX0weSwU--zELxo7sqGevxds9l74auv8IY6IZLD4smGnYcX8weCm4w2gUvA=s176-c-k-c0x00ffffff-no-rj",
+   videos:[
     {id:"oTbniKkgrvI", t:"On Se Fait HYPNOTISER Pour Voir Si C'est VRAI ou FAKE"}
   ]},
-  {type:"youtube", name:"Laurent Dagenais", tag:"YOUTUBE", url:"https://www.youtube.com/@laurentdagenais", videos:[
+  {type:"youtube", name:"Laurent Dagenais", tag:"YOUTUBE",
+   url:"https://www.youtube.com/@laurentdagenais",
+   avatar:"https://yt3.googleusercontent.com/Y3N1iy2kkFmxtij9Yi8LkzlChg4os257PZnVi6s5b633OYjXO3HiktUAhGsOgABiE_tqNnDW9Q=s176-c-k-c0x00ffffff-no-rj",
+   videos:[
     {id:"YhNp17OFVSM", t:"The Ultimate Corsican Food Road Trip"}
   ]},
-  {type:"youtube", name:"Jasmin Lavoie", tag:"YOUTUBE", videos:[
-    {id:"7fxjAhlifjI", t:"J'ai travaillé à l'ONU. Voici ce qu'on est vraiment en train de perdre."},
-    {id:"9WxhDO5wE_o", t:"J'ai regardé des heures de propagande sans le savoir (et toi aussi)"},
-    {id:"h6kROFySGfQ", t:"Je pense qu'on n'était pas censés vivre comme ça"},
+  {type:"youtube", name:"Billstrade", tag:"YOUTUBE",
+   url:"https://www.youtube.com/@TraderBills",
+   avatar:"https://yt3.googleusercontent.com/pA78S04NK7BfYND6Z41T6tZ2gOa-S9YIBHTJCUQvsu_0uqXQDnbZ3fGZOp8Ou9TvY119_wpR=s176-c-k-c0x00ffffff-no-rj",
+   videos:[
+    {id:"n5XOA3PIoHg", t:"The most unreal Villa I've ever seen"}
+  ]},
+  {type:"youtube", name:"Jasmin Lavoie", tag:"YOUTUBE",
+   url:"https://www.youtube.com/@JasminLavoieJL",
+   avatar:"https://yt3.googleusercontent.com/SwmbewYTrEar7RTrNeNToMXJgkYN8cMHvbyRFabfPkuuCm12YxP1r3neQBkkoKZwHMwlmjvrEEw=s176-c-k-c0x00ffffff-no-rj",
+   videos:[
+    {id:"2aKBiD9BvXk", t:"J'ai trouvé le prochain Trump"},
     {id:"sDnCXSR8MRg", t:"Je voulais la Coupe du monde dans ma ville. J'ai changé d'idée."},
-    {id:"2aKBiD9BvXk", t:"J'ai trouvé le prochain Trump"}
+    {id:"h6kROFySGfQ", t:"Je pense qu'on n'était pas censés vivre comme ça"},
+    {id:"9WxhDO5wE_o", t:"J'ai regardé des heures de propagande sans le savoir (et toi aussi)"},
+    {id:"7fxjAhlifjI", t:"J'ai travaillé à l'ONU. Voici ce qu'on est vraiment en train de perdre."}
   ]},
   /* ---- PODCASTS ---- */
   {type:"podcast", name:"Tout le monde gagne, Ça ou ça & Cœur de robot", tag:"PODCAST",
